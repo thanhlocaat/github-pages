@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản lý đặt món - Tìm kiếm món</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-6">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-6">🍽️ Quản lý đặt món theo bàn</h1>
+
+    <!-- Tìm kiếm và chọn món -->
+    <div class="mb-6">
+      <label for="search" class="block font-semibold mb-2">🔍 Nhập tên món:</label>
+      <input type="text" id="search" class="w-full p-2 border rounded" oninput="filterMenu()" placeholder="Ví dụ: phở, cơm gà, trà sữa...">
+      <div id="menuList" class="border mt-2 rounded bg-white max-h-40 overflow-y-auto hidden"></div>
+    </div>
+
+    <!-- Danh sách món đã chọn -->
+    <div id="selectedMenu" class="mb-6">
+      <h2 class="text-xl font-semibold mb-2">📝 Danh sách món đã chọn:</h2>
+      <table class="w-full text-left border">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2 border">Tên món</th>
+            <th class="p-2 border">Giá</th>
+            <th class="p-2 border">Số lượng</th>
+            <th class="p-2 border">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="orderTableBody"></tbody>
+      </table>
+      <p class="mt-4 font-bold">Tổng tiền: <span id="totalPrice" class="text-red-600">0</span> đ</p>
+      <button onclick="saveOrder()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">💾 Lưu đơn</button>
+    </div>
+  </div>
+
+  <script>
+    const allMenu = [
+      { name: 'Phở', price: 40000 },
+      { name: 'Cơm gà', price: 50000 },
+      { name: 'Bún bò', price: 45000 },
+      { name: 'Trà sữa', price: 30000 },
+      { name: 'Nước ngọt', price: 20000 },
+      { name: 'Trà đào', price: 25000 }
+    ];
+
+    const orderItems = [];
+
+    function filterMenu() {
+      const input = document.getElementById('search').value.toLowerCase();
+      const listDiv = document.getElementById('menuList');
+      listDiv.innerHTML = '';
+      if (input.length === 0) {
+        listDiv.classList.add('hidden');
+        return;
+      }
+      const filtered = allMenu.filter(item => item.name.toLowerCase().includes(input));
+      if (filtered.length === 0) {
+        listDiv.classList.add('hidden');
+        return;
+      }
+      listDiv.classList.remove('hidden');
+      filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+        div.textContent = `${item.name} - ${item.price.toLocaleString()} đ`;
+        div.onclick = () => addToOrder(item);
+        listDiv.appendChild(div);
+      });
+    }
+
+    function addToOrder(item) {
+      const existing = orderItems.find(i => i.name === item.name);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        orderItems.push({ ...item, quantity: 1 });
+      }
+      document.getElementById('search').value = '';
+      document.getElementById('menuList').classList.add('hidden');
+      updateOrderTable();
+    }
+
+    function updateOrderTable() {
+      const tbody = document.getElementById('orderTableBody');
+      tbody.innerHTML = '';
+      let total = 0;
+      orderItems.forEach((item, index) => {
+        total += item.price * item.quantity;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="p-2 border">${item.name}</td>
+          <td class="p-2 border">${item.price.toLocaleString()} đ</td>
+          <td class="p-2 border">
+            <input type="number" value="${item.quantity}" min="1" class="w-16 p-1 border rounded" onchange="changeQuantity(${index}, this.value)">
+          </td>
+          <td class="p-2 border text-center">
+            <button onclick="removeItem(${index})" class="text-red-600">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+      document.getElementById('totalPrice').textContent = total.toLocaleString();
+    }
+
+    function changeQuantity(index, value) {
+      orderItems[index].quantity = parseInt(value);
+      updateOrderTable();
+    }
+
+    function removeItem(index) {
+      orderItems.splice(index, 1);
+      updateOrderTable();
+    }
+
+    function saveOrder() {
+      if (orderItems.length === 0) return alert('Chưa có món nào được chọn!');
+      const summary = orderItems.map(i => `${i.quantity} x ${i.name}`).join(', ');
+      alert(`Đơn đã lưu:
+${summary}`);
+    }
+  </script>
+</body>
+</html>
